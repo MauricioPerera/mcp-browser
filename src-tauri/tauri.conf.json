@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
+  "productName": "MCP Browser",
+  "identifier": "dev.mcpbrowser.app",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "MCP Browser",
+        "width": 1200,
+        "height": 800,
+        "url": "index.html"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}

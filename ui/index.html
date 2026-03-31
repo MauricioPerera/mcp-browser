@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MCP Browser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; }
+    .navbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e293b; border-bottom: 1px solid #334155; }
+    .navbar input { flex: 1; padding: 6px 12px; background: #0f172a; border: 1px solid #475569; color: #e2e8f0; border-radius: 6px; font-size: 14px; }
+    .navbar button { padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .status { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #94a3b8; white-space: nowrap; }
+    .status .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    h1 { font-size: 1.5rem; color: #4ade80; margin-bottom: 8px; }
+    .info { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 12px; font-size: 13px; }
+    .info h3 { color: #38bdf8; margin-bottom: 4px; }
+    code { background: #0f172a; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }
+    pre { background: #0f172a; padding: 10px; border-radius: 6px; font-size: 12px; margin-top: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="status"><div class="dot"></div> MCP</div>
+    <input id="url-bar" placeholder="Enter URL..." value="https://example.com" onkeyup="if(event.key==='Enter') go()">
+    <button onclick="go()">Go</button>
+    <span class="status" id="tool-count">Ready</span>
+  </div>
+
+  <div class="content">
+    <h1>MCP Browser</h1>
+    <p style="color:#94a3b8;margin-bottom:16px;">A browser with a built-in MCP server. Navigate to any page — agents get auto-tools.</p>
+
+    <div class="info">
+      <h3>MCP Endpoint</h3>
+      <code>POST http://127.0.0.1:3002/mcp</code>
+    </div>
+
+    <div class="info">
+      <h3>Auto-registered tools (every page gets these)</h3>
+      <pre>page_title     — Get the page title
+page_url       — Get the current URL
+page_text      — Get page text content (first 5000 chars)
+page_html      — Get page HTML (first 10000 chars)
+query_selector — Query DOM elements by CSS selector
+navigate       — Navigate to a URL</pre>
+    </div>
+
+    <div class="info">
+      <h3>Custom tools (pages can register their own)</h3>
+      <pre>&lt;script&gt;
+  mcpTool("search", "Search products", { query: { type: "string" } },
+    (args) =&gt; searchProducts(args.query)
+  );
+&lt;/script&gt;</pre>
+    </div>
+
+    <div class="info">
+      <h3>Test from terminal</h3>
+      <pre>curl -X POST http://127.0.0.1:3002/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'</pre>
+    </div>
+  </div>
+
+  <!-- NO MCP handler here — the bridge script injected by Rust handles everything -->
+  <script>
+    function go() {
+      const url = document.getElementById('url-bar').value.trim();
+      if (!url) return;
+      const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+      if (window.__TAURI__) {
+        window.__TAURI__.core.invoke('navigate', { url: fullUrl });
+        document.getElementById('tool-count').textContent = 'Navigating...';
+      }
+    }
+  </script>
+</body>
+</html>

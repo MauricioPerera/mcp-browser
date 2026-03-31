@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Allow MCP bridge to work on any domain","remote":{"urls":["https://*","http://*"]},"local":true,"windows":["*"],"permissions":["core:default","core:event:default","core:event:allow-listen","core:event:allow-emit","core:event:allow-emit-to"]}}
