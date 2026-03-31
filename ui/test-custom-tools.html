@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head><title>Custom Tools Test</title></head>
+<body>
+  <h1>Shop Demo</h1>
+  <p>This page registers custom MCP tools for a fake shop.</p>
+
+  <script>
+    // Wait for the MCP bridge to be injected by the browser
+    function waitForMcp(cb) {
+      if (typeof mcpTool === 'function') return cb();
+      setTimeout(() => waitForMcp(cb), 200);
+    }
+
+    waitForMcp(function() {
+      // Custom tools for this specific website
+      mcpTool('search_products', 'Search products by name or category',
+        { query: { type: 'string' } },
+        function(args) {
+          var products = [
+            { id: 1, name: 'Laptop Pro', price: 999, category: 'electronics' },
+            { id: 2, name: 'Wireless Mouse', price: 29, category: 'electronics' },
+            { id: 3, name: 'Standing Desk', price: 449, category: 'furniture' },
+            { id: 4, name: 'Mechanical Keyboard', price: 89, category: 'electronics' },
+            { id: 5, name: 'Monitor 4K', price: 599, category: 'electronics' },
+          ];
+          var q = (args.query || '').toLowerCase();
+          var results = products.filter(function(p) {
+            return p.name.toLowerCase().includes(q) || p.category.includes(q);
+          });
+          return JSON.stringify(results);
+        }
+      );
+
+      mcpTool('get_product', 'Get product details by ID',
+        { id: { type: 'number' } },
+        function(args) {
+          var products = {
+            1: { id: 1, name: 'Laptop Pro', price: 999, description: 'High-performance laptop', stock: 15 },
+            2: { id: 2, name: 'Wireless Mouse', price: 29, description: 'Ergonomic wireless mouse', stock: 150 },
+          };
+          return JSON.stringify(products[args.id] || { error: 'Product not found' });
+        }
+      );
+
+      mcpTool('add_to_cart', 'Add a product to the shopping cart',
+        { product_id: { type: 'number' }, quantity: { type: 'number' } },
+        function(args) {
+          return JSON.stringify({
+            success: true,
+            message: 'Added ' + (args.quantity || 1) + 'x product #' + args.product_id + ' to cart',
+            cart_total: '$' + ((args.quantity || 1) * 999),
+          });
+        }
+      );
+
+      mcpTool('get_store_hours', 'Get store operating hours', {},
+        function() {
+          return JSON.stringify({
+            monday_friday: '9:00 AM - 8:00 PM',
+            saturday: '10:00 AM - 6:00 PM',
+            sunday: 'Closed',
+          });
+        }
+      );
+
+      document.body.innerHTML += '<p style="color:green;">4 custom tools registered!</p>';
+    });
+  </script>
+</body>
+</html>

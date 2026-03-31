@@ -45,16 +45,16 @@ const MCP_BRIDGE_SCRIPT: &str = r#"
   }
 
   waitForTauri(function() {
-    // Prevent double injection
-    if (window.__MCP_BRIDGE_LOADED__) return;
+    // Prevent double listener registration (but allow tool re-registration)
+    var listenerAlreadySet = !!window.__MCP_BRIDGE_LOADED__;
     window.__MCP_BRIDGE_LOADED__ = true;
 
     const { listen } = window.__TAURI__.event;
     const { invoke } = window.__TAURI__.core;
 
-    // MCP tool registry (fresh on each page)
-    window.__MCP_TOOLS__ = [];
-    window.__MCP_HANDLERS__ = {};
+    // MCP tool registry — preserve custom tools if already registered
+    if (!window.__MCP_TOOLS__) window.__MCP_TOOLS__ = [];
+    if (!window.__MCP_HANDLERS__) window.__MCP_HANDLERS__ = {};
 
     // Public API for web pages to register tools
     window.mcpTool = function(name, description, schema, handler) {
@@ -109,8 +109,8 @@ const MCP_BRIDGE_SCRIPT: &str = r#"
       }
     }
 
-    // Listen for MCP requests from Rust
-    listen('mcp-request', async function(event) {
+    // Listen for MCP requests from Rust (only once)
+    if (!listenerAlreadySet) listen('mcp-request', async function(event) {
       var body = event.payload;
       var response = await handleMcpRequest(body);
       if (response) {
@@ -120,7 +120,10 @@ const MCP_BRIDGE_SCRIPT: &str = r#"
 
     console.log('[MCP Browser] Bridge loaded. Use mcpTool() to register tools.');
 
-    // Auto-register basic tools
+    // Auto-register basic tools (skip if already registered by a previous injection)
+    if (window.__MCP_HANDLERS__['page_title']) {
+      console.log('[MCP Browser] Auto-tools already present, skipping.');
+    } else {
     mcpTool('page_title', 'Get the page title', {}, function() {
       return document.title;
     });
@@ -143,6 +146,7 @@ const MCP_BRIDGE_SCRIPT: &str = r#"
       await invoke('navigate', { url: args.url });
       return 'Navigating to ' + args.url;
     });
+    } // end auto-tools guard
   });
 })();
 "#;
@@ -252,16 +256,16 @@ fn main() {
                     .layer(cors)
                     .with_state(state);
 
-                let listener = match tokio::net::TcpListener::bind("127.0.0.1:9876").await {
+                let listener = match tokio::net::TcpListener::bind("127.0.0.1:4567").await {
                     Ok(l) => l,
                     Err(e) => {
                         eprintln!("Port 9876 busy: {}. Trying 9877...", e);
-                        tokio::net::TcpListener::bind("127.0.0.1:9877").await
+                        tokio::net::TcpListener::bind("127.0.0.1:4568").await
                             .expect("Failed to bind MCP server on 9876 or 9877")
                     }
                 };
 
-                println!("MCP server: http://127.0.0.1:9876/mcp");
+                println!("MCP server: http://127.0.0.1:4567/mcp");
                 axum::serve(listener, router).await.expect("MCP server failed");
             });
 
