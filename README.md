@@ -2,6 +2,8 @@
 
 Custom browser with built-in MCP server -- any page you visit exposes tools to AI agents.
 
+**Download:** [GitHub Releases](https://github.com/MauricioPerera/mcp-browser/releases) (Windows, macOS, Linux)
+
 ## What is this?
 
 MCP Browser is a Tauri-based desktop browser (Rust + WebView) that runs an HTTP MCP server on localhost. When you navigate to any web page, the browser automatically injects a bridge script that registers tools accessible to AI agents via the Model Context Protocol. Web pages can also register their own custom tools using the `mcpTool()` API.
@@ -118,7 +120,41 @@ curl -s -X POST http://127.0.0.1:4567/mcp \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"navigate","arguments":{"url":"https://example.com"}}}'
 ```
 
-## Build instructions
+## Download
+
+Pre-built binaries are available on [GitHub Releases](https://github.com/MauricioPerera/mcp-browser/releases):
+
+| Platform | Format | File |
+|----------|--------|------|
+| **Windows** | Installer | `MCP Browser_x.x.x_x64-setup.exe` |
+| **Windows** | MSI | `MCP Browser_x.x.x_x64_en-US.msi` |
+| **macOS (Apple Silicon)** | DMG | `MCP Browser_x.x.x_aarch64.dmg` |
+| **macOS (Intel)** | DMG | `MCP Browser_x.x.x_x64.dmg` |
+| **Linux** | Debian | `mcp-browser_x.x.x_amd64.deb` |
+| **Linux** | AppImage | `mcp-browser_x.x.x_amd64.AppImage` |
+
+### Quick start
+
+1. Download the installer for your platform from [Releases](https://github.com/MauricioPerera/mcp-browser/releases)
+2. Install and launch MCP Browser
+3. Navigate to any URL
+4. From another terminal, test the MCP server:
+
+```bash
+curl -s -X POST http://127.0.0.1:4567/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+### Connect with Claude Code
+
+```bash
+claude mcp add mcp-browser --transport http --url http://127.0.0.1:4567/mcp
+```
+
+Now Claude Code can read, query, and interact with any page open in MCP Browser.
+
+## Build from source
 
 ### Prerequisites
 
